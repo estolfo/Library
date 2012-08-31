@@ -85,3 +85,40 @@ get '/list' do
   @users = Users.find
   haml :list
 end
+
+# get list of books
+get '/books' do
+  puts session[:user]
+  
+end
+
+post '/books/' do
+  #  	_id: ObjectId
+  #  	title: UTF-8 string
+  #  	author: ObjectId
+  #  	ISBN: UTF-8 string
+  #  	available: Boolean
+  #  	publisher: Embedded document
+  #  		publisher_name: UTF-8 string
+  #  		date: Timestamp
+  #  		city: UTF-8 string
+  #  	pages: 32-bit Integer
+  #  	summary: UTF-8 string
+  #  	subjects: Array
+  #  		UTF-8 strings
+  #  	notes: Array
+  #  		Documents
+  #  			user: ObjectId
+  #  			note: UTF-8 string
+  #  	language: UTF-8 string
+end
+
+get '/authors' do
+
+end
+
+get '/authors/*-*/books' do |first, last|
+  puts "first name #{first}, last: #{last}"
+  
+  
+end
