@@ -3,8 +3,10 @@ require './model/mongoModule'
 require './model/user'
 
 connection = Mongo::Connection.new("localhost", 27017)
-Db         = connection.db('milieu')
-Users      = Db['users']
-Venues     = Db['venues']
-Checkins   = Db['checkins']
+DB         = connection.db('milieu')
+USERS      = DB['users']
+BOOKS      = DB['books']
+AUTHORS    = DB['authors'] 
 
+DB['authors'].create_index("slug", {:unique => true }) # unique index on slug
+DB['books'].create_index("slug", {:unique => true }) # unique index on slug

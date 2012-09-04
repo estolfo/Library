@@ -89,28 +89,70 @@ end
 # get list of books
 get '/books' do
   puts session[:user]
-  
+  haml :books_index
 end
 
-post '/books/' do
-  #  	_id: ObjectId
-  #  	title: UTF-8 string
-  #  	author: ObjectId
-  #  	ISBN: UTF-8 string
-  #  	available: Boolean
-  #  	publisher: Embedded document
-  #  		publisher_name: UTF-8 string
-  #  		date: Timestamp
-  #  		city: UTF-8 string
-  #  	pages: 32-bit Integer
-  #  	summary: UTF-8 string
-  #  	subjects: Array
-  #  		UTF-8 strings
-  #  	notes: Array
-  #  		Documents
-  #  			user: ObjectId
-  #  			note: UTF-8 string
-  #  	language: UTF-8 string
+# new book form
+get '/books/new' do
+  haml :new_book
+end
+
+post '/books' do
+  b               = {}
+  b[:title]       = params[:title].strip
+  b[:isbn]        = params[:isbn].strip
+  b[:pages]       = params[:pages].strip.to_i
+  b[:publisher]   = {}
+  b[:publisher][:publisher_name] = params[:publisher_name].strip
+
+  b[:publisher][:publisher_city] = params[:publisher_city].strip.capitalize
+  b[:available]   = params[:available].nil? ? false : true
+  b[:user]        = session[:user]._id
+
+  # handle author
+  author_first  = params[:author_first].strip.downcase.gsub(' ', '-')
+  author_last   = params[:author_last].strip.downcase.gsub(' ', '-')
+  author_slug   = [ author_first, author_last ].join('-')
+
+  response = AUTHORS.update( {:slug => author_slug },
+                         { :$set => {  :first_name => params[:author_first].strip.capitalize, 
+                                       :last_name => params[:author_last].strip.capitalize,
+                                       :slug => author_slug } },
+                         {:upsert => true, :safe => true }
+  )
+
+  if response["updatedExisting"]
+    print "updated existing author"
+    b[:author] = DB['authors'].find_one(:slug => author_slug)["_id"]
+  else
+    print "created new author"
+    b[:author] = response["upserted"]
+  end
+
+  # generate slug
+  book_title  = b[:title].downcase.gsub(' ', '-')
+  book_isbn   = b[:isbn].downcase.gsub(' ', '')
+  if book_isbn.empty?
+    book_slug = book_title
+  else
+    book_slug = [ book_isbn, book_title ].join("-")
+  end
+
+  print "book slug: #{book_slug}"
+   # handle date
+   #b[:publisher][:published_date] =
+ 
+  response = BOOKS.update( {:slug => book_slug },
+                       { :$set => {  :title      => b[:title], 
+                                     :isbn       => b[:isbn],
+                                     :pages      => b[:pages],
+                                     :publisher  => b[:publisher],
+                                     :user       => b[:user],
+                                     :available  => b[:available] } },
+                         {:upsert => true, :safe => true }
+   )
+   flash("book created")
+   redirect '/books'
 end
 
 get '/authors' do
@@ -119,6 +161,5 @@ end
 
 get '/authors/*-*/books' do |first, last|
   puts "first name #{first}, last: #{last}"
-  
   
 end

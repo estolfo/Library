@@ -1,0 +1,30 @@
+.content
+  .container
+    .row
+      .span12
+        %form{ :action => "/books", :method => "post"}
+          %h1= 'New Book for your collection'
+          %br
+          %p Title:
+          %input.form-input{ :name => "title", :type => "text", :size => "30"}
+          %p Author first name:
+          %input.form-input{ :name => "author_first", :type => "text"}
+          %p Author last name:
+          %input.form-input{ :name => "author_last", :type => "text"}
+          %p ISBN:
+          %input.form-input{ :name => "isbn", :type => "text", :size => "30"}
+          %p Pages:
+          %input.form-input{ :name => "pages", :type => "text", :size => "30"}
+          %p Publisher Name:
+          %input.form-input{ :name => "publisher_name", :type => "text"}
+          %p Published Date:
+          %input.form-input{ :name => "published_date", :type => "text"}
+          %p Publish city:
+          %input.form-input{ :name => "publisher_city", :type => "text"}
+          %p Available:
+          %input.form-input{ :name => "available", :type => "checkbox"}
+          %br
+          %br
+          %input.btn{ :name => "submit", :type => "submit", :value => "Submit"}
+
+
