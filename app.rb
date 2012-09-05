@@ -11,12 +11,21 @@ end
 
 before do
   unless session[:user] == nil
-    @suser = session[:user]
+    @user = session[:user]
   end
 end
 
+def books
+  @books = BOOKS.find({:user => @user._id }).sort([:title, :ascending])
+  haml :books_index
+end
+
 get '/' do
-  haml :index
+  if logged_in?
+    books
+  else
+    haml :index
+  end
 end
 
 get '/user' do
@@ -88,8 +97,7 @@ end
 
 # get list of books
 get '/books' do
-  puts session[:user]
-  haml :books_index
+  books
 end
 
 # new book form

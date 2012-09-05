@@ -1,3 +1,20 @@
-.content
-  .container
-    .row
+.container
+  .content
+    %table{class: "bordered-table zebra-striped", id: "userSortedTable"}
+      %thead
+        %tr
+          %td{colspan: '8'}
+            %h4 Books
+            %tr
+              %th{class: 'header'} Title
+
+          ~@books.each do |book|
+            %tr
+              %td= book['title']
+
+:plain
+  <script>
+    $(function() {
+      $("table#userSortedTable").tablesorter({ sortList: [[1,0]] });
+    });
+    </script>

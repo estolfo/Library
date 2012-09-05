@@ -5,20 +5,21 @@
         %span.icon-bar
           %span.icon-bar
             %span.icon-bar
-              %a.brand{:href => '/'} Milieu
+              %a.brand{:href => '/'} Library
       .nav-collapse
         %ul.nav
           %li
-            %a{:href => '/'}Home
+            %a{:href => '/'}Books
           %li
             %a{:href => '/about'}About
-          %li
-            %a{:href => '/register'}Register
+          -unless logged_in?
+            %li
+              %a{:href => '/register'}Register
         %p.navbar-text.pull-right
           -if logged_in?
-            %a{:href => "/user/" << @suser.email.to_s << "/dashboard"} 
-              %image{:height => 30, :width => 30, :src => "http://www.gravatar.com/avatar/" << @suser.email_hash.to_s << '.png' }
-              #{@suser.email} 
+            %a{:href => "/user/" << @user.email.to_s << "/dashboard"} 
+              %image{:height => 30, :width => 30, :src => "http://www.gravatar.com/avatar/" << @user.email_hash.to_s << '.png' }
+              #{@user.email} 
             |
             %a{:href => "/logout" } Logout
 

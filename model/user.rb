@@ -17,14 +17,14 @@ class User
   end
 
   def self.auth(login, pass)
-    u = Users.find_one("email" => login)
+    u = USERS.find_one("email" => login)
     return nil if u.nil?
     return User.new(u) if User.encrypt(pass, u['salt']) == u['hashed_password']
     nil
   end
 
   def self.new_from_email(email)
-    u = Users.find_one("email" => email)
+    u = USERS.find_one("email" => email)
     return nil if u.nil?
     return User.new(u)
     nil

@@ -15,7 +15,7 @@ module MongoModule
     end
 
     def save()
-        col = Db[self.collection]
+        col = DB[self.collection]
         self.updated_at = Time.now
         col.save(self.to_hash)
     end

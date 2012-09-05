@@ -40,12 +40,12 @@ body:before {/* thanks to Maleika (Kohoutec)*/
 }
 
 a.brand {
-    background-image: url('/images/milieu_sm.png');
+    background-image: url('/images/books.jpg');
     background-repeat: no-repeat;
 }
 
 .navbar .brand {
-    padding-left: 45px;
+    padding-left: 80px;
 }
 
 .navbar-text img {
