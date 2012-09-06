@@ -1,20 +1,19 @@
 .container
   .content
-    %table{class: "bordered-table zebra-striped", id: "userSortedTable"}
+    %table{class: "table table-striped"}
       %thead
         %tr
-          %td{colspan: '8'}
-            %h4 Books
-            %tr
-              %th{class: 'header'} Title
+          %td{colspan: '5'}<
+            %h2 Books
 
-          ~@books.each do |book|
-            %tr
-              %td= book['title']
+        -@books.each do |book|
+          %tr
+            %td
+              %a{:href => "/books/#{book['slug']}"}= book['title']
+            %td= book['author']["name"]
 
-:plain
-  <script>
-    $(function() {
-      $("table#userSortedTable").tablesorter({ sortList: [[1,0]] });
-    });
-    </script>
+        %tr
+          %th{colspan: '5', class: 'header', style: 'text-align:left'} 
+
+
+    %a{:href => "/books/new", :class => "btn"} new book

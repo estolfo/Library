@@ -1,0 +1,21 @@
+.content
+  .container
+    .row
+      .span12
+        %form{ :action => "", :method => "post"}
+          %h1< 
+            Review 
+            %a{:href => '/books/' + @book["slug"]} #{@book["title"]}
+            
+          %br
+          %p Review:
+          %input.form-input{ :name => "title", :type => "textarea", :size => "30"}
+          %p Rating:
+          %input.form-input{ :name => "rating", :type => "select"}
+            - for i in [1..5]
+              %option= i
+          %br
+          %br
+          %input.btn{ :name => "submit", :type => "submit", :value => "Submit"}
+
+

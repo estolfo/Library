@@ -1,5 +1,5 @@
 .container
   .content
-    %h2= @user.email.to_s << ' profile'
+    %h2= @user.email.to_s
     %p= 'name: ' <<  @user.name.to_s
     %image{src: "http://www.gravatar.com/avatar/" << @user.email_hash.to_s << '.png'}

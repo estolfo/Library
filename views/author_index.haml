@@ -1,0 +1,19 @@
+.container
+  .content
+    %table{class: "table table-striped"}
+      %thead
+        %tr
+          %td{colspan: '5'}<
+            %h2 Authors
+
+        -@authors.each do |author|
+          %tr
+            %td{colspan: '3'}= "#{author["author_info"]["first_name"]} #{author["author_info"]["last_name"]}"
+          -author["books"].each do |book|
+            %tr
+              %td{colspan: '2'} 
+              %td{colspan: '3'}
+                %a{:href => "/books/#{book['slug']}"}= book['title']
+
+        %tr
+          %th{colspan: '8', class: 'header', style: 'text-align:left'} 
