@@ -1,15 +1,11 @@
-This is a starter project using Ruby, Sinatra, Haml, Bootstrap and MongoDB.
+This is an example web application using Ruby, Sinatra, Haml, Bootstrap and MongoDB.
 
-It is a bare bones project to start from. Out of the box it contains a small controller
-with methods to register a user and view the users profile and dashboard. 
+It allows a user to store book and author information and illustrates common schema patterns.
 
-It also has simple login & logout functionality.
-
-This has been built by spf13 http://spf13.com
-
-It is based on worked done by ghostandthemachine.
+It is based on worked done by spf13 http://spf13.com and ghostandthemachine.
 https://github.com/ghostandthemachine/sinatra-haml-bootstrap-fluid
 
+and is built by Emily Stolfo www.linkedin.com/in/emilystolfo
 
 Setup:
    It is based on the following Gems
@@ -32,4 +28,3 @@ run:
 change Shotgun settings. Like wise /config/deploy.rb for the Vlad settings and
 Gemfile for your bundler install settings
 
-enjoy!
