@@ -32,7 +32,7 @@ helpers do
   end
   
   def books
-    @books = BOOKS.find({:user => @user._id }).sort([:title, :ascending]).to_a
+    @books = BOOKS.find().sort([:title, :ascending]).to_a
     @books.map! do |book|
       author = AUTHORS.find_one(book["author"])
       book["author"] = {"_id" => author["_id"], "name" => "#{author["first_name"]} #{author["last_name"]}" }

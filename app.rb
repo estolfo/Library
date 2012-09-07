@@ -10,8 +10,8 @@ configure do
   @@server_version = DB.connection.server_version
   @@mongo_gem_version = Gem.loaded_specs["mongo"].version.to_s
   # set up indexes. Run this before starting the app
-  #DB['authors'].create_index("slug", {:unique => true }) # unique index on user and slug
-  #DB['books'].create_index([["user", Mongo::ASCENDING], ["slug", Mongo::ASCENDING ]], {:unique => true }) # TODO user should be indexes in ascending order?
+  #DB['authors'].create_index("slug", {:unique => true }) # unique index on slug
+  #DB['books'].create_index("slug", {:unique => true }) # TODO user should be indexes in ascending order?
 end
 
 # TODO if session[:user] == nil
@@ -22,34 +22,33 @@ before do
 end
 
 get '/' do
-  if logged_in?
-    @book_count = BOOKS.find({:user => @user._id}).count
+  unless session[:user] == nil
+    @book_count = BOOKS.find().count
     
     if @@server_version > '2.1.1' and @@mongo_gem_version >= '1.7.0'
-      puts "using aggregation framework"
-      authors = BOOKS.aggregate([
-                {"$match" => {"user" => @user._id }}, 
-                {"$project" => {"author" => 1}}, 
-                {"$group" => {"_id" => "$author", "book_count" =>  { "$sum" => 1}}} 
-              ])
-      @author_count = authors.length
-    else
-      puts "using group function"
-      authors = BOOKS.group(
-                      { :cond => {"user" => @user._id }, 
-      	                :key => "author",
-                        :initial =>{:book_count => 0},
-                        :reduce => "function(doc, out){ 
-                                    var author = db.authors.findOne(doc.author);
-                                    out.book_count++; }"
-                      } )
-      @author_count = authors.length
-    end
-    
-    haml :user_dashboard
+     puts "using aggregation framework"
+     authors = BOOKS.aggregate([
+               {"$project" => {"author" => 1}}, 
+               {"$group" => {"_id" => "$author", "book_count" =>  { "$sum" => 1}}} 
+             ])
+     @author_count = authors.length
+   else
+     puts "using group function"
+     authors = BOOKS.group(
+                     { :key => "author",
+                       :initial =>{:book_count => 0},
+                       :reduce => "function(doc, out){ 
+                                   var author = db.authors.findOne(doc.author);
+                                   out.book_count++; }"
+                     } )
+     @author_count = authors.length
+   end
+ 
+   haml :user_dashboard
   else
     haml :index
   end
+
 end
 
 get '/user' do
@@ -65,13 +64,14 @@ get '/login' do
 end
 
 post '/login' do
-  if session[:user] = User.auth(params["email"], params["password"])
-    flash("Login successful")
-    redirect "/user/" << session[:user].email << "/dashboard"
-  else
-    flash("Login failed - Try again")
-    redirect '/login'
-  end
+  #if session[:user] = User.auth(params["email"], params["password"])
+    #flash("Login successful")
+  session[:user] = params["email"]
+  redirect "/user/" << session[:user].email << "/dashboard"
+  #else
+  #  flash("Login failed - Try again")
+  #  redirect '/login'
+  #end
 end
 
 get '/logout' do
@@ -87,13 +87,14 @@ end
 post '/register' do
   u            = User.new
   u.email      = params[:email]
-  u.password   = params[:password]
+  #u.password   = params[:password]
   u.name       = params[:name]
   u.email_hash = Digest::MD5.hexdigest(params[:email].downcase)
 
   if u.save()
     flash("User created")
-    session[:user] = User.auth( params["email"], params["password"])
+    print u._id
+    session[:user] = u#User.auth( params["email"], params["password"])
     redirect '/user/' << session[:user].email.to_s << "/dashboard"
   else
     tmp = []
@@ -176,7 +177,7 @@ post '/books' do
    #b[:publisher][:published_date] =
    #time_for('Dec 23, 2012')
  
-  response = BOOKS.update( {:slug => book_slug, :user => @user._id },
+  response = BOOKS.update( {:slug => book_slug },
                        { :$set => {  :title      => b[:title], 
                                      :isbn       => b[:isbn],
                                      :pages      => b[:pages],
@@ -192,7 +193,7 @@ end
 
 # see one book
 get '/books/:slug' do 
-  @book = BOOKS.find_one({:slug => params[:slug], :user => @user._id })
+  @book = BOOKS.find_one({:slug => params[:slug] })
   haml :book
 end
 
@@ -213,8 +214,7 @@ end
 
 get '/authors' do
   @authors = BOOKS.group(
-                  { :cond => {"user" => @user._id }, 
-  	                :key => "author",
+                  { :key => "author",
                     :initial =>{:books => [], :author_info => {}},
                     :reduce => "function(doc, out){ 
                                 var author = db.authors.findOne(doc.author);
