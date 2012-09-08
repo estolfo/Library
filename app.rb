@@ -16,7 +16,6 @@ end
 
 
 before /^(?!\/(home|register|login))/ do
-  puts "in before block"
   if session[:user] == nil
     redirect '/home'
   else
