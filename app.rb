@@ -14,15 +14,20 @@ configure do
   #DB['books'].create_index("slug", {:unique => true }) # TODO user should be indexes in ascending order?
 end
 
-# TODO if session[:user] == nil
-before do
-  unless session[:user] == nil
+
+before /^(?!\/(home|register|login))/ do
+  puts "in before block"
+  if session[:user] == nil
+    redirect '/home'
+  else
     @user = session[:user]
+    @user["email_hash"] = Digest::MD5.hexdigest(@user["email"].downcase)
   end
 end
 
-get '/' do
-  unless session[:user] == nil
+get '/home' do
+  @user = session[:user]
+  unless @user == nil
     @book_count = BOOKS.find().count
     
     if @@server_version > '2.1.1' and @@mongo_gem_version >= '1.7.0'
@@ -43,7 +48,7 @@ get '/' do
                      } )
      @author_count = authors.length
    end
- 
+   
    haml :user_dashboard
   else
     haml :index
@@ -52,7 +57,11 @@ get '/' do
 end
 
 get '/user' do
-  redirect '/user/' + session[:user].email + '/profile'
+  if @user[:email].nil?
+    redirect '/home'
+  else
+    redirect '/home/' + @user[:email] + '/profile'
+  end
 end
 
 get '/about' do
@@ -64,20 +73,25 @@ get '/login' do
 end
 
 post '/login' do
-  #if session[:user] = User.auth(params["email"], params["password"])
-    #flash("Login successful")
-  session[:user] = params["email"]
-  redirect "/user/" << session[:user].email << "/dashboard"
-  #else
-  #  flash("Login failed - Try again")
-  #  redirect '/login'
-  #end
+  if params[:email]
+    session[:user] = USERS.find_one({:email => params[:email] } )
+    if session[:user].nil?
+      flash("Login failed - Try again")
+      redirect '/login'
+    end
+  else
+    flash("Login failed - Try again")
+    redirect '/login'
+  end
+
+  redirect "/user/" << session[:user]["email"] << "/dashboard"
+
 end
 
 get '/logout' do
-  session[:user] = nil
+  session[:user], @user = nil
   flash("Logout successful")
-  redirect '/'
+  redirect '/home'
 end
 
 get '/register' do
@@ -85,25 +99,27 @@ get '/register' do
 end
 
 post '/register' do
-  u            = User.new
-  u.email      = params[:email]
-  #u.password   = params[:password]
-  u.name       = params[:name]
-  u.email_hash = Digest::MD5.hexdigest(params[:email].downcase)
-
-  if u.save()
-    flash("User created")
-    print u._id
-    session[:user] = u#User.auth( params["email"], params["password"])
-    redirect '/user/' << session[:user].email.to_s << "/dashboard"
-  else
-    tmp = []
-    u.errors.each do |e|
-      tmp << (e.join("<br/>"))
+  u            = {}
+  u[:email]      = params[:email]
+  u[:name]       = params[:name]
+  
+  if USERS.find_one({:email => u[:email] }).nil?
+    
+    if USERS.save(u)
+      flash("User created")
+      session[:user] = USERS.find_one({:email => u[:email]})
+      redirect '/login'
+    
+    else
+      flash("User not created")
+      redirect '/register'
     end
-    flash(tmp)
-    redirect '/create'
+      
+  else
+      flash("Email already taken, try another one.")
+      redirect '/register'
   end
+  
 end
 
 get '/user/:email/dashboard' do
@@ -113,14 +129,8 @@ get '/user/:email/dashboard' do
 end
 
 get '/user/:email/profile' do
-  @user = User.new_from_email(params[:email])
   haml :user_profile
 end
-
-#get '/list' do
-#  @users = Users.find
-#  haml :list
-#end
 
 # get list of books
 get '/books' do
@@ -142,7 +152,7 @@ post '/books' do
 
   b[:publisher][:publisher_city] = params[:publisher_city].strip.capitalize
   b[:available]   = params[:available].nil? ? false : true
-  b[:user]        = session[:user]._id
+  b[:created_by]  = @user.nil? ? "" : @user["_id"]
 
   # handle author
   author_first  = params[:author_first].strip.downcase.gsub(' ', '-')
@@ -182,7 +192,7 @@ post '/books' do
                                      :isbn       => b[:isbn],
                                      :pages      => b[:pages],
                                      :publisher  => b[:publisher],
-                                     :user       => b[:user],
+                                     :created_by => b[:created_by],
                                      :available  => b[:available],
                                      :author     => b[:author] } },
                          {:upsert => true, :safe => true }
@@ -197,18 +207,19 @@ get '/books/:slug' do
   haml :book
 end
 
-# enter a review for one book
-get '/books/:slug/review' do 
-  @book = BOOKS.find_one({:slug => params[:slug], :user => @user._id })
-  haml :book_review
+# enter a note for one book
+get '/books/:slug/notes' do 
+  @book = BOOKS.find_one({:slug => params[:slug]})
+  haml :book_note
 end
 
-# submit a review for one book
-post '/books/:slug/review' do 
-  @book = BOOKS.find_one({:slug => params[:slug], :user => @user._id })
-  
-  # save review and rating
-  
+# submit a note for one book
+post '/books/:slug/notes' do 
+  note = {:user => @user["_id"], :note => params[:note] }
+  @book = BOOKS.find_and_modify({ :query => {:slug => params[:slug] },
+                                     :update => { :$push => { :notes => note } } ,
+                                     :new => true } )
+  redirect "/books" if @book.nil?
   redirect "/books/" + @book["slug"]
 end
 
@@ -223,8 +234,4 @@ get '/authors' do
                   } )
 
   haml :author_index
-end
-
-get '/authors/*-*/books' do |first, last|
-  #puts "first name #{first}, last: #{last}"
 end

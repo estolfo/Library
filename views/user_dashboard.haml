@@ -2,8 +2,8 @@
   .content
     .page-header
       -unless @user == nil?
-        %a{href: "/user/" << @user.email.to_s << "/profile"}<
-          %image{src: "http://www.gravatar.com/avatar/" << @user.email_hash.to_s << '.png'}
+        %a{href: "/user/" << @user["email"] << "/profile"}<
+          %image{src: "http://www.gravatar.com/avatar/" << @user["email_hash"] << '.png'}
         %br<
         %br
         %h2= "Book count: #{@book_count}"
