@@ -28,6 +28,7 @@
     %div= haml :navbar
     #wrap
       #main.body
+        =show_flash
         %div= yield
 
     -#%hr
@@ -49,5 +50,6 @@
     %script{ :type => "text/javascript", :src =>"/bootstrap/js/basic/bootstrap-collapse.js"}
     %script{ :type => "text/javascript", :src =>"/bootstrap/js/basic/bootstrap-carousel.js"}
     %script{ :type => "text/javascript", :src =>"/bootstrap/js/basic/bootstrap-typeahead.js"}
+    %script{ :type => "text/javascript", :src =>"/js/flash-notice.js"}
 
 

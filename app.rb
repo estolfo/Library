@@ -1,5 +1,5 @@
 require 'sinatra'
-require './helpers/sinatra'
+require './helpers/library_helpers'
 require './model/mongodb'
 require 'haml'
 require 'digest/md5'
@@ -10,13 +10,14 @@ configure do
   @@server_version = DB.connection.server_version
   @@mongo_gem_version = Gem.loaded_specs["mongo"].version.to_s
   # set up indexes. Run this before starting the app
+  #DB['users'].create_index("email", {:unique => true })
   #DB['authors'].create_index("slug", {:unique => true }) # unique index on slug
   #DB['books'].create_index("slug", {:unique => true }) # TODO user should be indexes in ascending order?
 end
 
 
 before /^(?!\/(home|register|login))/ do
-  if session[:user] == nil
+  unless session[:user]
     redirect '/home'
   else
     @user = session[:user]
@@ -32,8 +33,9 @@ get '/home' do
     if @@server_version > '2.1.1' and @@mongo_gem_version >= '1.7.0'
      puts "using aggregation framework"
      authors = BOOKS.aggregate([
-               {"$project" => {"author" => 1}}, 
-               {"$group" => {"_id" => "$author", "book_count" =>  { "$sum" => 1}}} 
+               {"$match" => {"author" => {"$exists" => true } } },
+               {"$project" => {"author" => 1 } }, 
+               {"$group" => {"_id" => "$author", "book_count" =>  { "$sum" => 1 } } } 
              ])
      @author_count = authors.length
    else
@@ -56,15 +58,15 @@ get '/home' do
 end
 
 get '/user' do
-  if @user[:email].nil?
+  if @user["email"].nil?
     redirect '/home'
   else
-    redirect '/home/' + @user[:email] + '/profile'
+    redirect '/home/' + @user["email"] + '/profile'
   end
 end
 
 get '/about' do
-  haml :about
+  haml :index
 end
 
 get '/login' do
@@ -88,7 +90,7 @@ post '/login' do
 end
 
 get '/logout' do
-  session[:user], @user = nil
+  session[:user] = nil
   flash("Logout successful")
   redirect '/home'
 end
@@ -106,7 +108,6 @@ post '/register' do
     
     if USERS.save(u)
       flash("User created")
-      session[:user] = USERS.find_one({:email => u[:email]})
       redirect '/login'
     
     else
@@ -154,23 +155,25 @@ post '/books' do
   b[:created_by]  = @user.nil? ? "" : @user["_id"]
 
   # handle author
-  author_first  = params[:author_first].strip.downcase.gsub(' ', '-')
-  author_last   = params[:author_last].strip.downcase.gsub(' ', '-')
-  author_slug   = [ author_first, author_last ].join('-')
+  unless params[:author_first].empty? and params[:author_last].empty?
+    author_first  = params[:author_first].strip.downcase.gsub(' ', '-')
+    author_last   = params[:author_last].strip.downcase.gsub(' ', '-')
+    author_slug   = [ author_first, author_last ].join('-')
 
-  response = AUTHORS.update( {:slug => author_slug },
-                         { :$set => {  :first_name => params[:author_first].strip.capitalize, 
-                                       :last_name => params[:author_last].strip.capitalize,
-                                       :slug => author_slug } },
-                         {:upsert => true, :safe => true }
-  )
+    response = AUTHORS.update( {:slug => author_slug },
+                           { :$set => {  :first_name => params[:author_first].strip.capitalize, 
+                                         :last_name => params[:author_last].strip.capitalize,
+                                         :slug => author_slug } },
+                           {:upsert => true, :safe => true }
+    )
 
-  if response["updatedExisting"]
-    print "updated existing author"
-    b[:author] = DB['authors'].find_one(:slug => author_slug)["_id"]
-  else
-    print "created new author"
-    b[:author] = response["upserted"]
+    if response["updatedExisting"]
+      print "updated existing author"
+      b[:author] = DB['authors'].find_one(:slug => author_slug)["_id"]
+    else
+      print "created new author"
+      b[:author] = response["upserted"]
+    end
   end
 
   # generate slug
@@ -196,7 +199,13 @@ post '/books' do
                                      :author     => b[:author] } },
                          {:upsert => true, :safe => true }
    )
-   flash("book created")
+   
+   if response["updatedExisting"]
+     flash("Updated existing book")
+   else
+     flash("New book created")
+   end
+   
    redirect '/books'
 end
 
@@ -226,10 +235,13 @@ get '/authors' do
   @authors = BOOKS.group(
                   { :key => "author",
                     :initial =>{:books => [], :author_info => {}},
-                    :reduce => "function(doc, out){ 
-                                var author = db.authors.findOne(doc.author);
-                                out.author_info = {first_name: author.first_name, last_name: author.last_name};
-                                out.books.push({title: doc.title, slug : doc.slug}); };"
+                    :reduce => "function(doc, out){
+                                if (doc.author != null) {
+                                  var author = db.authors.findOne(doc.author);
+                                  out.author_info = {first_name: author.first_name, last_name: author.last_name};
+                                  out.books.push({title: doc.title, slug : doc.slug}); 
+                                  };
+                                }"
                   } )
 
   haml :author_index

@@ -11,7 +11,7 @@ html, body {height: 100%;}
 #main {
     overflow: visible;
     padding-bottom: 45px;
-    padding-top: 60px;
+    padding-top: 70px;
 }  /* must be same height as the footer */
 
 footer {
@@ -54,5 +54,25 @@ a.brand {
 
 footer p {
    padding-left: 20px;
+}
+
+#flash-notice { 
+	position: absolute; 
+	width: 100%; 
+	background-color: #9DD8E5; 
+	top: 47px; 
+	left: 0; 
+	z-index: 1000; 
+	text-align: center; 
+	filter: alpha(opacity=85); 
+	-moz-opacity: 0.85; 
+	-khtml-opacity: 0.85; 
+	opacity: 0.85; 
+	margin:0; 
+	padding: 8px 0 7px 0; 
+	color: #000; 
+	font-size: 16px; 
+	line-height: 16px; 
+	font-weight: normal;
 }
 

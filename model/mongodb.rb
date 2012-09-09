@@ -1,6 +1,6 @@
 require 'mongo'
 
-connection = Mongo::Connection.new("localhost", 27017)
+connection = Mongo::Connection.new(URI.parse(ENV['DATABASE_URL'] || 'localhost'))
 DB         = connection.db('library')
 USERS      = DB['users']
 BOOKS      = DB['books']

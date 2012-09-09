@@ -8,15 +8,16 @@
               %a.brand{:href => '/home'} Library
       .nav-collapse
         %ul.nav
-          %li
-            %a{:href => '/books'}Books
-          %li
-            %a{:href => '/authors'}Authors
-          -unless @user
+          -if logged_in?
+            %li
+              %a{:href => '/books'}Books
+            %li
+              %a{:href => '/authors'}Authors
+          -unless logged_in?
             %li
               %a{:href => '/register'}Register
         %p.navbar-text.pull-right
-          -unless @user.nil?
+          -if logged_in?
             %a{:href => "/user/" << @user["email"] << "/profile"} 
               %image{:height => 30, :width => 30, :src => "http://www.gravatar.com/avatar/" << @user['email_hash'] << '.png' }
               #{@user["email"]} 
